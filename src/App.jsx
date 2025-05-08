@@ -1,33 +1,29 @@
 // `https://api.frankfurter.app/latest?amount=100&from=EUR&to=USD`
-
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function App() {
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(100);
+  const [output, setOutput] = useState(null);
   const [from, setFrom] = useState("USD");
   const [to, setTo] = useState("USD");
-  const [output, setOutput] = useState("Output");
 
   useEffect(() => {
-    if (!amount) {
-      setOutput("Здесь будет посчитана сумма");
-      return;
-    }
-
-    if (from === to) {
-      setOutput("Валюты должны отличаться");
-      return;
-    }
-
-    async function convertCurrency() {
+    async function makeExchange() {
       const res = await fetch(
         `https://api.frankfurter.app/latest?amount=${amount}&from=${from}&to=${to}`
       );
-      const data = await res.json();
-      setOutput(data.rates[`${to}`]);
+      let output = await res.json();
+      console.log( output);
+
+      if(output.message === 'bad currency pair'){
+        setOutput('Валюты должны быть разные');
+        return;
+      }      
+      output = output.rates[to] ?? null;
+      setOutput(output);
     }
 
-    convertCurrency();
+    makeExchange();
   }, [amount, from, to]);
 
   return (
@@ -35,12 +31,13 @@ export default function App() {
       <input
         type="text"
         value={amount}
-        onChange={(e) => setAmount(e.currentTarget.value)}
-        placeholder="Выберите количество"
+        onChange={(e) => {
+          setAmount(e.target.value);
+        }}
       />
       <select
         onChange={(e) => {
-          setFrom(e.currentTarget.value);
+          setFrom(e.target.value);
         }}
       >
         <option value="USD">USD</option>
@@ -50,7 +47,7 @@ export default function App() {
       </select>
       <select
         onChange={(e) => {
-          setTo(e.currentTarget.value);
+          setTo(e.target.value);
         }}
       >
         <option value="USD">USD</option>
@@ -58,7 +55,7 @@ export default function App() {
         <option value="CAD">CAD</option>
         <option value="INR">INR</option>
       </select>
-      <p>{output}</p>
+      <p>{output ? output : "OUTPUT"}</p>
     </div>
   );
 }
